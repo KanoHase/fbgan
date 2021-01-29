@@ -47,11 +47,26 @@ def plot_losses(losses_list, legends_list, file_out):
     plt.savefig(file_out)
     plt.close()
 
+def plot_losses_2(losses_list, legends_list, file_out, itr):
+    assert len(losses_list) == len(legends_list)
+
+    plt.bar(itr, losses_list[0])
+
+    plt.plot(losses_list[1], label=legends_list[1])
+    plt.plot(losses_list[2], label=legends_list[2])
+
+    plt.legend()
+    plt.savefig(file_out)
+    plt.close()
+
 def decode_one_seq(img, letter_dict = {'A':0, 'C':1, 'G':2, 'T':3}):
     seq = ''
+    onlist=[]
     for row in range(len(img)):
         on = np.argmax(img[row,:])
         seq += letter_dict[on]
+        onlist.append(on)
+    #print(onlist[0:156])
     return seq
 
 def splitTrainTestVal(dataset, percent_train, percent_val = 0):

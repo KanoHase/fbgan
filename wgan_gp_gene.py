@@ -44,7 +44,7 @@ class WGAN_LangGP():
         self.checkpoint_dir = './checkpoint/' + run_name + "/"
         self.sample_dir = './samples/' + run_name + "/"
         self.load_data(data_dir)
-        if not os.path.exists(self.checkpoint_dir): os.makedirs(self.checkpoint_dir)
+        if not os.path.exists(self.checkpoint_dir): os.makedirs(self.checkpoint_dir)#パスが存在しているか確認
         if not os.path.exists(self.sample_dir): os.makedirs(self.sample_dir)
         self.use_cuda = True if torch.cuda.is_available() else False
         self.build_model()
@@ -70,21 +70,22 @@ class WGAN_LangGP():
         self.data = lines
 
     def save_model(self, epoch):
-        torch.save(self.G.state_dict(), self.checkpoint_dir + "G_weights_{}.pth".format(epoch))
+        torch.save(self.G.state_dict(), self.checkpoint_dir + "G_weights_{}.pth".format(epoch))#モデルの保存、state_dict：パラメータの辞書
         torch.save(self.D.state_dict(), self.checkpoint_dir + "D_weights_{}.pth".format(epoch))
 
     def load_model(self, directory = ''):
+        # import pdb; pdb.set_trace()
         '''
             Load model parameters from most recent epoch
         '''
         if len(directory) == 0:
             directory = self.checkpoint_dir
-        list_G = glob.glob(directory + "G*.pth")
+        list_G = glob.glob(directory + "G*.pth")#.pthファイルの名前がリストアップ[1.pth,...,143.pth]
         list_D = glob.glob(directory + "D*.pth")
         if len(list_G) == 0:
             print("[*] Checkpoint not found! Starting from scratch.")
             return 1 #file is not there
-        G_file = max(list_G, key=os.path.getctime)
+        G_file = max(list_G, key=os.path.getctime)#listGの中で、時間が一番大きい？もの
         D_file = max(list_D, key=os.path.getctime)
         epoch_found = int( (G_file.split('_')[-1]).split('.')[0])
         print("[*] Checkpoint {} found at {}!".format(epoch_found, directory))
@@ -172,6 +173,7 @@ class WGAN_LangGP():
                 real_data = to_var(real_data)
 
                 d_fake_err, d_real_err, gradient_penalty = self.disc_train_iteration(real_data)
+                d_err = d_fake_err - d_real_err + gradient_penalty
 
                 # Append things for logging
                 d_fake_np, d_real_np, gp_np = d_fake_err.cpu().numpy(), \
@@ -187,11 +189,11 @@ class WGAN_LangGP():
                     G_losses.append((g_err.data).cpu().numpy())
 
                 if counter % 100 == 99:
-                    self.save_model(i)
-                    self.sample(i)
+                    self.save_model(idx)
+                    self.sample(idx)
                 if counter % 10 == 9:
                     summary_str = 'Iteration [{}/{}] - loss_d: {}, loss_g: {}, w_dist: {}, grad_penalty: {}'\
-                        .format(i, total_iterations, (d_err.data).cpu().numpy(),
+                        .format(idx, total_iterations, (d_err.data).cpu().numpy(),
                         (g_err.data).cpu().numpy(), ((d_real_err - d_fake_err).data).cpu().numpy(), gp_np)
                     print(summary_str)
                     losses_f.write(summary_str)
